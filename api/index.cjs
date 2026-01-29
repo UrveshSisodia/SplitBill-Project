@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect('mongodb+srv://urveshsisodia123_db_user:Yyh6N38SS0Z3CtwZ@cluster0.gwd1sxa.mongodb.net/?appName=Cluster0')
+mongoose.connect('mongodb+srv://urveshsisodia123_db_user:wPCouKHK9f3uWIVA@cluster0.gwd1sxa.mongodb.net/?appName=Cluster0')
     .then(() => console.log('Database Connected Successfully'))
     .catch((err) => console.log('Error:', err));
 
