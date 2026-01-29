@@ -1,6 +1,6 @@
-const express = require('express');
-const cors = require('cors');
-const mongoose = require('mongoose');
+import express from 'express';
+import cors from 'cors';
+import mongoose from 'mongoose';
 
 const app = express();
 
@@ -22,7 +22,8 @@ const splitSchema = new mongoose.Schema({
     }]
 });
 
-const Split = mongoose.model('Split', splitSchema);
+// Check if model exists before compiling (Fix for hot reload issues)
+const Split = mongoose.models.Split || mongoose.model('Split', splitSchema);
 
 const connectToDatabase = async () => {
     if (mongoose.connection.readyState >= 1) {
@@ -94,4 +95,4 @@ app.post('/api/split', async (req, res) => {
     }
 });
 
-module.exports = app;
+export default app;
