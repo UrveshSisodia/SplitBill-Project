@@ -1,42 +1,60 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
 const mongoose = require('mongoose');
 
-app.use(cors());
-app.use(express.json());
+const app = express();
 
-mongoose.connect('mongodb+srv://urveshsisodia123_db_user:wPCouKHK9f3uWIVA@cluster0.gwd1sxa.mongodb.net/?appName=Cluster0')
-    .then(() => console.log('Database Connected Successfully'))
-    .catch((err) => console.log('Error:', err));
+app.use(cors({
+    origin: "*",
+    methods: ["GET", "POST"],
+    credentials: true
+}));
+app.use(express.json());
 
 const splitSchema = new mongoose.Schema({
     amount: Number,
     payer: String,
+    date: { type: Date, default: Date.now },
     members: [{
         name: String,
         share: Number,
-        requested: Boolean
+        requested: { type: Boolean, default: false }
     }]
 });
 
 const Split = mongoose.model('Split', splitSchema);
 
-app.post('/split', async (req, res) => {
+const connectToDatabase = async () => {
+    if (mongoose.connection.readyState >= 1) {
+        return;
+    }
     try {
+        await mongoose.connect('mongodb+srv://urveshsisodia123_db_user:wPCouKHK9f3uWIVA@cluster0.gwd1sxa.mongodb.net/?appName=Cluster0')
+        console.log("Database Connected");
+    } catch (err) {
+        console.error("Database Error:", err);
+        throw err;
+    }
+};
+
+app.post('/api/split', async (req, res) => {
+    try {
+        await connectToDatabase();
+
         if (!req.body.amount || !req.body.payer) {
             return res.status(400).json({ error: "Please provide amount and payer name" });
         }
-        var total = parseInt(req.body.amount);
+
+        var total = Math.floor(Number(req.body.amount));
         var main = req.body.payer;
-        var ID = req.body.Id;
+        var ID = req.body.friends || req.body.Id || [];
 
         var all_users = [];
-
         all_users.push({ name: main });
 
         for (var i = 0; i < ID.length; i++) {
-            all_users.push({ name: ID[i].name });
+            var fName = ID[i].name ? ID[i].name : ID[i];
+            all_users.push({ name: fName });
         }
 
         var count = all_users.length;
@@ -50,11 +68,9 @@ app.post('/split', async (req, res) => {
 
         var final_list = all_users.map((user, index) => {
             var my_share = share;
-
             if (index === 0) {
                 my_share = share + extra;
             }
-
             return {
                 name: user.name,
                 share: my_share,
@@ -71,9 +87,11 @@ app.post('/split', async (req, res) => {
         await newEntry.save();
 
         res.json(final_list);
-    }
-    catch (err) {
-        console.log("Error ", err);
-        res.status(500).json({ error: "Internal Server Error" });
+
+    } catch (err) {
+        console.error("Error ", err);
+        res.status(500).json({ error: "Internal Server Error", details: err.message });
     }
 });
+
+module.exports = app;
